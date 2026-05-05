@@ -1,0 +1,12 @@
+# Build artifacts
+dist/
+webapp/dist/
+webapp/node_modules/
+*.tar.gz
+*.zip
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.log
