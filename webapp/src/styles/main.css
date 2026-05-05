@@ -1,0 +1,410 @@
+/* =============================================================================
+   MATTERMOST RTL & TELEGRAM STYLE PLUGIN  — main.css
+   =============================================================================
+   Goals:
+     1. Transform channel posts into Telegram-style chat bubbles.
+     2. Own messages → right-hand side, tinted bubble.
+     3. Others' messages → left-hand side, card bubble.
+     4. RTL text support (class .mmRTL--rtl injected by JS).
+     5. Hover action buttons (react / reply / …) kept OUTSIDE the bubble area
+        so they never overlap text regardless of message direction.
+     6. All Mattermost theme CSS variables are preserved — we only change
+        layout and shape, not palette.
+   ============================================================================= */
+
+
+/* ─────────────────────────────────────────────────────────────
+   1. POST ROW — the outer flex container
+   [avatar] [content] [actions]  ← others
+   [actions] [content] [avatar]  ← own  (flex-direction: row-reverse)
+   ───────────────────────────────────────────────────────────── */
+
+.post-list__dynamic .post:not(.post--system),
+.post-list-holder-by-time .post:not(.post--system) {
+    display: flex !important;
+    flex-direction: row;
+    align-items: flex-end !important;
+    padding: 2px 16px !important;
+    margin: 0 0 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Own messages — mirror the row so bubble slides to the right */
+.post:not(.post--system).current--user {
+    flex-direction: row-reverse !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   2. AVATAR COLUMN
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post__img {
+    flex-shrink: 0;
+    align-self: flex-end;
+    margin-bottom: 2px;
+}
+
+/* Hide own avatar (Telegram never shows your own avatar) */
+.post.current--user:not(.post--system) .post__img {
+    visibility: hidden;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   3. CONTENT COLUMN — holds header + bubble + reactions
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post__content {
+    display: flex !important;
+    flex-direction: column;
+    max-width: min(68%, 640px);
+    min-width: 0;
+    flex: 0 1 auto;          /* do NOT grow to fill the row */
+    position: relative;
+}
+
+/* Others → left-align everything inside the content column */
+.post:not(.current--user):not(.post--system) .post__content {
+    align-items: flex-start;
+    margin-left: 8px;
+}
+
+/* Own → right-align everything inside the content column */
+.post.current--user:not(.post--system) .post__content {
+    align-items: flex-end;
+    margin-right: 8px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   4. POST HEADER (username + timestamp)
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post__header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 2px;
+    padding: 0 4px !important;
+}
+
+/* Own messages — hide username; Telegram doesn't show it for self */
+.post.current--user .post__header .col__name,
+.post.current--user .post__header .user-popover {
+    display: none !important;
+}
+
+/* Own messages — push timestamp to the right */
+.post.current--user .post__header {
+    justify-content: flex-end;
+}
+
+.post__header-time {
+    font-size: 11px;
+    opacity: 0.65;
+    white-space: nowrap;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   5. THE BUBBLE  (.post__body)
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post__body {
+    position: relative;
+    padding: 8px 12px 6px !important;
+    border-radius: 18px;
+    max-width: 100%;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    clear: none !important;
+}
+
+/* ── Others' bubble ── */
+.post:not(.current--user):not(.post--system) .post__body {
+    background: var(--center-channel-bg);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Own bubble ── */
+.post.current--user:not(.post--system) .post__body {
+    background: var(--center-channel-bg);
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+
+/*
+ * Tint own bubble with the theme accent color.
+ * We use a pseudo-element overlay so we never touch the palette variables —
+ * the tint is always 14 % of whatever --button-bg is in the active theme.
+ */
+.post.current--user:not(.post--system) .post__body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--button-bg);
+    opacity: 0.14;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ensure actual content renders above the tint layer */
+.post.current--user:not(.post--system) .post__body > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Remove the default hover highlight — bubbles handle their own look */
+.post:not(.post--system):hover {
+    background: transparent !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   6. CONSECUTIVE / COMBINED POSTS (same author, back-to-back)
+   ───────────────────────────────────────────────────────────── */
+
+/* Others — keep the lower-left corner sharp only on the LAST bubble */
+.post.post--combined:not(.current--user):not(.post--system) .post__body {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 18px;
+}
+
+/* Own — keep the lower-right corner sharp only on the LAST bubble */
+.post.post--combined.current--user:not(.post--system) .post__body {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 18px;
+}
+
+/* Tighter spacing between consecutive bubbles */
+.post.post--combined:not(.post--system) {
+    margin-bottom: 0 !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+}
+
+/* Combined posts have no avatar → add left margin to align with others */
+.post.post--combined:not(.current--user):not(.post--system) .post__content {
+    margin-left: 44px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   7. ACTION BUTTONS (reaction / reply / … — appear on hover)
+
+   KEY DESIGN:  the action buttons must NEVER overlap the bubble text.
+
+   Strategy: we reset any absolute positioning on the Mattermost action
+   column and keep it as a flex sibling in the row.
+
+     Others: [avatar] [bubble] [actions →]
+     Own:    [← actions] [bubble] (invisible avatar)
+
+   Because we use `flex-direction: row-reverse` for own posts, the action
+   column is naturally pushed to the LEFT of the bubble — no extra CSS
+   needed for that direction.
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .col.post-menu,
+.post:not(.post--system) .post-menu__item-container,
+.post:not(.post--system) div[class*='post-menu'],
+.post:not(.post--system) div[class*='postMenu'] {
+    /* Bring back into flex flow (Mattermost sometimes uses position:absolute) */
+    position: static !important;
+    align-self: flex-start;
+    flex-shrink: 0;
+    display: flex !important;
+    align-items: center;
+
+    /* Hidden by default; shown on row hover */
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.12s ease, visibility 0.12s ease;
+    pointer-events: none;
+
+    /* Visual pill */
+    background: var(--center-channel-bg);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+    padding: 2px 4px;
+    margin: 0 4px;
+    white-space: nowrap;
+    z-index: 5;
+}
+
+/* Show on post hover */
+.post:not(.post--system):hover .col.post-menu,
+.post:not(.post--system):hover .post-menu__item-container,
+.post:not(.post--system):hover div[class*='post-menu'],
+.post:not(.post--system):hover div[class*='postMenu'] {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* In row-reverse (own messages) the flex order already puts the menu on
+   the LEFT — no additional rule needed. */
+
+
+/* ─────────────────────────────────────────────────────────────
+   8. REACTIONS
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post-reaction-list,
+.post:not(.post--system) .post__reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 0 2px;
+}
+
+/* Own reactions → right-aligned */
+.post.current--user .post-reaction-list,
+.post.current--user .post__reactions {
+    justify-content: flex-end;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   9. REPLY / THREAD PREVIEW  (quoted message above the bubble)
+   ───────────────────────────────────────────────────────────── */
+
+.post:not(.post--system) .post__reply-preview {
+    border-radius: 12px 12px 0 0;
+    margin-bottom: -6px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    opacity: 0.8;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post.current--user .post__reply-preview {
+    border-right: 3px solid var(--button-bg);
+    border-left: none;
+    text-align: right;
+}
+
+.post:not(.current--user) .post__reply-preview {
+    border-left: 3px solid var(--link-color);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   10. SYSTEM MESSAGES  (e.g. "User joined the channel")
+   ───────────────────────────────────────────────────────────── */
+
+.post.post--system {
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+.post.post--system .post__content {
+    max-width: 100%;
+    text-align: center;
+    align-items: center;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   11. RTL TEXT DIRECTION
+       Class .mmRTL--rtl is injected by the MutationObserver in rtl.js
+   ───────────────────────────────────────────────────────────── */
+
+/*
+ * Base: allow the browser to determine paragraph direction from the
+ * first strong character in the text (unicode-bidi: plaintext).
+ * This alone handles most mixed-content posts without any JS.
+ */
+.post-message__text,
+.post-message__text p {
+    unicode-bidi: plaintext;
+}
+
+/* When JS confirms the message is RTL, set direction explicitly */
+.mmRTL--rtl .post-message__text,
+.mmRTL--rtl .post-message__text-container {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: plaintext;
+}
+
+.mmRTL--rtl .post-message__text p,
+.mmRTL--rtl .post-message__text ul,
+.mmRTL--rtl .post-message__text ol,
+.mmRTL--rtl .post-message__text li,
+.mmRTL--rtl .post-message__text blockquote {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Code blocks and inline code must stay LTR regardless of message direction */
+.mmRTL--rtl .post-message__text pre,
+.mmRTL--rtl .post-message__text code,
+.mmRTL--rtl .post-message__text .hljs {
+    direction: ltr !important;
+    text-align: left !important;
+    unicode-bidi: normal !important;
+}
+
+/* Tables — let browser decide per-cell direction */
+.mmRTL--rtl .post-message__text table {
+    direction: rtl;
+}
+.mmRTL--rtl .post-message__text th,
+.mmRTL--rtl .post-message__text td {
+    text-align: right;
+    unicode-bidi: plaintext;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   12. MARKDOWN ELEMENTS INSIDE BUBBLES
+       We preserve all Mattermost Markdown rendering; only adjust
+       spacing and alignment to fit the bubble container.
+   ───────────────────────────────────────────────────────────── */
+
+.post__body .post-message__text pre {
+    border-radius: 8px;
+    margin: 6px 0;
+}
+
+.post__body .post-message__text blockquote {
+    margin: 4px 0;
+    padding: 4px 10px;
+    border-radius: 0 6px 6px 0;
+}
+
+.mmRTL--rtl .post__body .post-message__text blockquote {
+    border-right: 3px solid var(--link-color);
+    border-left: none;
+    border-radius: 6px 0 0 6px;
+    padding: 4px 10px 4px 6px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   13. SPACING RHYTHM
+   ───────────────────────────────────────────────────────────── */
+
+/* Larger gap when the author changes */
+.post:not(.post--combined):not(.post--system) {
+    margin-top: 8px;
+}
+
+/* Tiny gap between consecutive bubbles from the same author */
+.post.post--combined:not(.post--system) {
+    margin-top: 0;
+}

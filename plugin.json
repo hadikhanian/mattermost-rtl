@@ -1,0 +1,32 @@
+{
+    "id": "com.hadikhanian.mattermost-rtl",
+    "name": "Mattermost RTL & Telegram Style",
+    "description": "Transforms Mattermost channel chat into Telegram-like chat bubbles with automatic RTL (Persian/Arabic/Hebrew) text support.",
+    "homepage_url": "https://github.com/hadikhanian/mattermost-rtl",
+    "support_url": "https://github.com/hadikhanian/mattermost-rtl/issues",
+    "version": "1.0.0",
+    "min_server_version": "7.0.0",
+    "webapp": {
+        "bundle_path": "webapp/dist/main.js"
+    },
+    "settings_schema": {
+        "header": "## Mattermost RTL & Telegram Style\n\nConfigure the RTL support and Telegram-like bubble UI for your Mattermost channels.",
+        "footer": "",
+        "settings": [
+            {
+                "key": "EnableRTL",
+                "display_name": "Enable RTL Text Detection",
+                "type": "bool",
+                "help_text": "Automatically detect right-to-left text (Persian, Arabic, Hebrew) and render it correctly. Enabled by default.",
+                "default": true
+            },
+            {
+                "key": "EnableTelegramStyle",
+                "display_name": "Enable Telegram-style Chat Bubbles",
+                "type": "bool",
+                "help_text": "Display messages as chat bubbles similar to Telegram: your messages appear on the right, others on the left.",
+                "default": true
+            }
+        ]
+    }
+}
